@@ -37,6 +37,12 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.7</version>
 		</dependency>	
+	    <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-simple</artifactId>
+          <version>1.7.7</version>
+          <scope>runtime</scope>
+        </dependency>   
 	</dependencies>
 	
 	<repositories>
@@ -89,6 +95,19 @@
 	      <configuration>
 		<source>1.6</source>  
  		<target>1.6</target>
+	      </configuration>
+	    </plugin>
+	    <plugin>
+	      <artifactId>maven-assembly-plugin</artifactId>
+	      <configuration>
+	        <archive>
+	          <manifest>
+	            <mainClass>com.ociweb.mqtt.Main</mainClass>
+	          </manifest>
+	        </archive>
+	        <descriptorRefs>
+	          <descriptorRef>jar-with-dependencies</descriptorRef>
+	        </descriptorRefs>
 	      </configuration>
 	    </plugin>
 	  </plugins>

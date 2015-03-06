@@ -1,5 +1,6 @@
 package com.ociweb.mqtt;
 
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
@@ -32,21 +33,67 @@ public class Main {
 
 	public void run() {
 		
-		RingBufferConfig messagesConfig = new RingBufferConfig((byte)8,(byte)21,null, FieldReferenceOffsetManager.RAW_BYTES);
-		RingBuffer messagesRing = new RingBuffer(messagesConfig);
+		RingBufferConfig messagesConfig = new RingBufferConfig((byte)8,(byte)21,null, MQTTFROM.from);
+		
+		
 
 		GraphManager graphManager = new GraphManager();
 		
-		MQTTStage mStage = new MQTTStage(graphManager, messagesRing);		
-		MessageGenStage  genStage = new MessageGenStage(graphManager, messagesRing);
+		int clientBits = 10;//generate 1K clients per pipe
+		int pipes = 4;
 		
+		int i = pipes;
+		MessageGenStage[] genStages = new MessageGenStage[pipes];
+		while (--i>=0) {
+			genStages[i] = buildSinglePipeline(messagesConfig, graphManager, clientBits, i);
+		}
+				
 		StageManager scheduler = new ThreadPerStageManager(GraphManager.cloneAll(graphManager));
-		scheduler.startup();
-		 
-		 
-		long TIMEOUT_SECONDS = 120;
-		boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		
+		long start = System.currentTimeMillis();
+		scheduler.startup();		 
+		 
+		Scanner scan = new Scanner(System.in);
+		System.out.println("press enter to exit");
+		scan.hasNextLine();
+		
+		System.out.println("exiting...");
+		scheduler.shutdown();
+		
+		
+		long TIMEOUT_SECONDS = 20;
+		boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		if (!cleanExit) {
+			System.err.println("clean exit:"+cleanExit+" unable to get totals.");
+			return;
+		}
+		
+		long duration = System.currentTimeMillis() - start;
+		
+		showTotals(pipes, genStages, duration);
+		
+	}
+
+
+	private void showTotals(int pipes, MessageGenStage[] genStages,
+			long duration) {
+		int i;
+		long messages = 0;
+		i = genStages.length;
+		while (--i>=0) {
+			messages += genStages[i].getMessageCount();
+		}		
+		
+		float msgPerMs = (pipes*messages)/(float)duration;
+		
+		System.err.println("msg/ms "+msgPerMs+"  totalMessages:"+messages);
+	}
+
+
+	private MessageGenStage buildSinglePipeline(RingBufferConfig messagesConfig, GraphManager graphManager, int clientBits, int base) {
+		RingBuffer messagesRing = new RingBuffer(messagesConfig);
+		MQTTStage mStage = new MQTTStage(graphManager, messagesRing);			
+		return new MessageGenStage(graphManager, messagesRing, clientBits, base);
 	}
 	
 }
