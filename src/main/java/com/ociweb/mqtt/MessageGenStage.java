@@ -19,16 +19,19 @@ public class MessageGenStage extends PronghornStage {
 	
 	private final String server;
 	private final int qos;
+		
+	private final byte[] topic;
+	private final byte[] payload;
 	
-	
-	private final byte[] topic = "pub/root/hello".getBytes();
-	private final byte[] payload = "hello world".getBytes();
-	
-	protected MessageGenStage(GraphManager graphManager, RingBuffer output, int maxClientsBits, int base, String server, int qos, String clientPrefix) {
+	protected MessageGenStage(GraphManager graphManager, RingBuffer output, int maxClientsBits, int base, String server, int qos, 
+			                  String clientPrefix, String topicString, String payloadString) {
 		
 		super(graphManager, NONE, output);
 		this.outputRing = output;
 		assert(MQTTFROM.from == RingBuffer.from(output)); //TOOD: AA, is there an easier way to detect this failure if this line is not used?
+		
+		this.topic = topicString.getBytes();
+		this.payload = payloadString.getBytes();
 		
 		this.maxClients = 1<<maxClientsBits;
 		this.clientMask = maxClients-1;//65K clients

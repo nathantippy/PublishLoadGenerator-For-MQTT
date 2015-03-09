@@ -19,19 +19,38 @@ public class Main {
 	public Main() {
 			
 		 
-		 //TODO: add palyoud and topic args.
-		 //TODO: add CSV file load
+		 //TODO: add CSV file load for Keven this week.
 		 //TODO: add telemetry for YF (must be done next week)
+		 //TODO: set up VMs so we can run 4 at the same time.
 		 	
 		
 	}
 	
+    
+    private static void printHelp(String message) {
+        System.out.println(message);
+        System.out.println();
+        System.out.println("Usage:");
+        System.out.println("       App -b <tcp://localhost:1883> -pre <client id prefix> -q <qos num> -t <topic> -p <payloadWithoutWhitespace>");
+        System.out.println("       NOTE: only the -b argument is required all others are optional.");
+        System.out.println("Arguments:");
+        System.out.println("          -b or -broker            URI to broker, must start with tcp://, ssl:// or local://");
+        System.out.println("          -pre or -clientPrefix    prefix to add to all clients simulated by this running instance.");
+        System.out.println("          -q or -qos               quality of service, can be 0, 1, or 2.");
+        System.out.println("          -t or -topic             topic to send.");
+        System.out.println("          -p or -payload           payload to send. White space in payload is not supported at this time.");        
+        System.out.println();
+    }
 	
 	public static void main(String[] args) {
 
 		String server = getReqArg("-broker", "-b", args);// -b tcp://localhost:1883
-		String clientPrefix = getReqArg("-clientPrefx", "-p", args);// -p blue
-		String qosString = getOptArg("-qos","-q",args,"0"); //-q 1
+		
+		String clientPrefix = getOptArg("-clientPrefx", "-pre", args, "client");// -pre blue
+		String qosString = getOptArg("-qos","-q",args,"0"); //-q 1		
+		String topicString = getOptArg("-topic","-t",args,"thisIsATopic"); //-t topic	
+		String payloadString = getOptArg("-payload","-p",args,"thisIsAPayload"); //-p helloworld //note white space is not supported in payload
+		
 		int qos = 0;
 		try{
 			qos = Integer.parseInt(qosString);
@@ -39,21 +58,19 @@ public class Main {
 	        printHelp("QOS should be a number 0, 1, or 2");
 	        System.exit(BAD_VALUE);
 		}
+			
 		
-		
-		
-		Main instance = new Main();
-		
-		int clientBits = 12;//generate 4K clients per pipe
-		int pipes = Math.min(6, Math.max(1, Runtime.getRuntime().availableProcessors()));		
-		
-		System.out.println("Total simulated clients: "+((1<<clientBits)*pipes)+" over "+pipes+" total threads" );
-		instance.run(server, clientBits, pipes, qos, clientPrefix);
+		Main instance = new Main();	
+
+		instance.run(server, qos, clientPrefix, topicString, payloadString);
 		
 	}
 
-	public void run(String broker, int clientBits, int pipes, int qos, String clientPrefix) {
-	
+	public void run(String broker, int qos, String clientPrefix, String topicString, String payloadString) {
+		int clientBits = 12;//generate 4K clients per pipe
+		int pipes = Math.min(6, Math.max(1, Runtime.getRuntime().availableProcessors()-1));		
+		System.out.println("BETA 1.0");
+		System.out.println("Total simulated clients: "+((1<<clientBits)*pipes)+" over "+pipes+" total threads" );
 		
 		RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
 				
@@ -63,7 +80,7 @@ public class Main {
 		int i = pipes;
 		MessageGenStage[] genStages = new MessageGenStage[pipes];
 		while (--i>=0) {
-			genStages[i] = buildSinglePipeline(messagesConfig, graphManager, clientBits, i, broker, qos, clientPrefix);
+			genStages[i] = buildSinglePipeline(messagesConfig, graphManager, clientBits, i, broker, qos, clientPrefix, topicString, payloadString);
 		}
 				
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
@@ -107,12 +124,14 @@ public class Main {
 	}
 	
 
-	private MessageGenStage buildSinglePipeline(RingBufferConfig messagesConfig, GraphManager graphManager, int clientBits, int base, String server, int qos, String clientPrefix) {
+	private MessageGenStage buildSinglePipeline(RingBufferConfig messagesConfig, GraphManager graphManager, int clientBits, 
+			                                    int base, String server, int qos, 
+			                                    String clientPrefix, String topicString, String payloadString) {
 		RingBuffer messagesRing = new RingBuffer(messagesConfig);
 		assert(messagesRing.maxAvgVarLen>=256) : "messages can be blocks as big as 256";
 		
 		MQTTStage mStage = new MQTTStage(graphManager, messagesRing);			
-		return new MessageGenStage(graphManager, messagesRing, clientBits, base, server, qos, clientPrefix);
+		return new MessageGenStage(graphManager, messagesRing, clientBits, base, server, qos, clientPrefix, topicString, payloadString);
 	}
 	
     private static String getReqArg(String longName, String shortName, String[] args) {
@@ -145,14 +164,6 @@ public class Main {
         }
         return defaultValue;
     }
-    
-    private static void printHelp(String message) {
-        System.out.println(message);
-        System.out.println();
-        System.out.println("Usage:");
-        System.out.println("       App -broker <tcp://localhost:1883> -p <client id prefix> -c <csv file>");
-        System.out.println();
-        System.out.println();
-    }
+
 	
 }
