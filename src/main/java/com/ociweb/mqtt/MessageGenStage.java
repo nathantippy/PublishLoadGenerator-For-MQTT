@@ -80,9 +80,13 @@ public class MessageGenStage extends PronghornStage {
 			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length);		
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_CLIENT_INDEX_LOC, externalIdValue(clientId));
 			 				 
-			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_QOS_LOC, qos);	
 			 
-			 loadMessage();					
+			 
+			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_QOS_LOC, qos);			 
+			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, topic, 0, topic.length);		
+			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, payload, 0, payload.length);					
+			 
+			 
 			 
 			 RingWriter.publishWrites(outputRing);
 			 
@@ -91,13 +95,6 @@ public class MessageGenStage extends PronghornStage {
 			 return;
 		 }
 	
-	}
-
-
-	
-	private void loadMessage() {
-		 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, topic, 0, topic.length);		
-		 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, payload, 0, payload.length);
 	}
 
 }

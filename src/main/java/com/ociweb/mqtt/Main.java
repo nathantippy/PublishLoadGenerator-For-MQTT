@@ -28,6 +28,10 @@ public class Main {
 	
     
     private static void printHelp(String message) {
+    	
+    	//	kernel parameters in /etc/sysctl.conf in the format:
+    	//		net.ipv4.tcp_tw_reuse=1
+    	    	
         System.out.println(message);
         System.out.println();
         System.out.println("Usage:");
@@ -38,8 +42,15 @@ public class Main {
         System.out.println("          -pre or -clientPrefix    prefix to add to all clients simulated by this running instance.");
         System.out.println("          -q or -qos               quality of service, can be 0, 1, or 2.");
         System.out.println("          -t or -topic             topic to send.");
-        System.out.println("          -p or -payload           payload to send. White space in payload is not supported at this time.");        
+        System.out.println("          -p or -payload           payload to send. White space in payload is not supported at this time.");       
+        System.out.println("          -n or -number            number of concurrent piplines each simulating 4K clients");
+        System.out.println("");
+        System.out.println("To support more client connections to a broker instance you may want to adjust this client side setting.");
+        System.out.println("    kernel parameters in /etc/sysctl.conf ");
+        System.out.println("    net.ipv4.tcp_tw_reuse=1 ");
+        System.out.println("");
         System.out.println();
+        
     }
 	
 	public static void main(String[] args) {
@@ -47,10 +58,10 @@ public class Main {
 		String server = getReqArg("-broker", "-b", args);// -b tcp://localhost:1883
 		
 		String clientPrefix = getOptArg("-clientPrefx", "-pre", args, "client");// -pre blue
-		String qosString = getOptArg("-qos","-q",args,"0"); //-q 1		
 		String topicString = getOptArg("-topic","-t",args,"thisIsATopic"); //-t topic	
 		String payloadString = getOptArg("-payload","-p",args,"thisIsAPayload"); //-p helloworld //note white space is not supported in payload
 		
+		String qosString = getOptArg("-qos","-q",args,"0"); //-q 1		
 		int qos = 0;
 		try{
 			qos = Integer.parseInt(qosString);
@@ -59,28 +70,44 @@ public class Main {
 	        System.exit(BAD_VALUE);
 		}
 			
+		int maxPipes = Math.min(16, Math.max(1, Runtime.getRuntime().availableProcessors()/2));
+		
+		String maxPipesString = getOptArg("-number","-n",args,Integer.toString(maxPipes)); //-n 4 
+		if (null!=maxPipesString) {
+			try {
+				maxPipes = Integer.parseInt(maxPipesString);
+				if (maxPipes<1) {
+					printHelp("number should be a value where  (0 < x <=16)");
+			        System.exit(BAD_VALUE);
+				}
+			} catch (NumberFormatException nfe) {
+		        printHelp("number should be a value where  (0 < x <=16)");
+		        System.exit(BAD_VALUE);
+			}
+		}
+		
 		
 		Main instance = new Main();	
 
-		instance.run(server, qos, clientPrefix, topicString, payloadString);
+		instance.run(server, qos, clientPrefix, topicString, payloadString, maxPipes);
 		
 	}
 
-	public void run(String broker, int qos, String clientPrefix, String topicString, String payloadString) {
+	public void run(String broker, int qos, String clientPrefix, String topicString, String payloadString, int maxPipes) {
 		int clientBits = 12;//generate 4K clients per pipe
-		int pipes = Math.min(6, Math.max(1, Runtime.getRuntime().availableProcessors()-1));		
-		System.out.println("BETA 1.0");
-		System.out.println("Total simulated clients: "+((1<<clientBits)*pipes)+" over "+pipes+" total threads" );
+		int pipes = maxPipes;
+		System.out.println("BETA 1.1");
+		System.out.println("Total simulated clients: "+((1<<clientBits)*pipes)+" over "+pipes+" total concurrent pipelines" );
 		
 		RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
 				
 		
 		GraphManager graphManager = new GraphManager();
 		
-		int i = pipes;
+		int pipeId = pipes;
 		MessageGenStage[] genStages = new MessageGenStage[pipes];
-		while (--i>=0) {
-			genStages[i] = buildSinglePipeline(messagesConfig, graphManager, clientBits, i, broker, qos, clientPrefix, topicString, payloadString);
+		while (--pipeId>=0) {
+			genStages[pipeId] = buildSinglePipeline(messagesConfig, graphManager, clientBits, pipeId, broker, qos, clientPrefix, topicString, payloadString);
 		}
 				
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
@@ -124,14 +151,14 @@ public class Main {
 	}
 	
 
-	private MessageGenStage buildSinglePipeline(RingBufferConfig messagesConfig, GraphManager graphManager, int clientBits, 
+	private MessageGenStage buildSinglePipeline(RingBufferConfig messagesConfig, GraphManager graphManager, int pipeId, 
 			                                    int base, String server, int qos, 
 			                                    String clientPrefix, String topicString, String payloadString) {
 		RingBuffer messagesRing = new RingBuffer(messagesConfig);
 		assert(messagesRing.maxAvgVarLen>=256) : "messages can be blocks as big as 256";
 		
 		MQTTStage mStage = new MQTTStage(graphManager, messagesRing);			
-		return new MessageGenStage(graphManager, messagesRing, clientBits, base, server, qos, clientPrefix, topicString, payloadString);
+		return new MessageGenStage(graphManager, messagesRing, pipeId, base, server, qos, clientPrefix, topicString, payloadString);
 	}
 	
     private static String getReqArg(String longName, String shortName, String[] args) {

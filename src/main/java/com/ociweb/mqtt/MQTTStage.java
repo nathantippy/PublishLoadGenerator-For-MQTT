@@ -89,23 +89,18 @@ public class MQTTStage extends PronghornStage {
 		int j = tokens.length;
 		while (--j>=0) {
 			try {
-				tokens[j].waitForCompletion();
+				if (!tokens[j].isComplete()) {
+					tokens[j].waitForCompletion();					
+				}
+				
+				if (null!=tokens[j].getException()) {
+					tokens[j].getException().printStackTrace();
+				}
+				
 			} catch (MqttException e) {
 				throw new RuntimeException(e);
 			}
 		}
-	}
-	
-	private int hasBlockingTokens(MqttClient client) {
-		IMqttDeliveryToken[] tokens = client.getPendingDeliveryTokens();
-		int j = tokens.length;
-		int c = 0;
-		while (--j>=0) {
-				if (!tokens[j].isComplete()) {
-					c++;
-				};
-		}
-		return c;
 	}
 
 	private MqttClient lookupClientConnection() {
