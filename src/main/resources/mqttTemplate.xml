@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+
+     <!--  add support for retained boolean by sending a different template?  -->
+     
+   <template name="MQTT" id="100" xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+     <string name="serverURI" id="10">
+            <copy/>
+     </string>
+     <string name="clientid" id="11">
+            <copy/>
+     </string>
+     <int32 name="index" id="12">
+            <copy/>
+     </int32>
+     <string name="topic" id="20">
+            <copy/>
+     </string>
+     <bytevector name="payload" id="21">
+            <copy/>
+     </bytevector>     
+     <uInt32 name="qos" id="22">
+            <copy/>
+     </uInt32>
+   </template>
+
+</templates>

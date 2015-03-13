@@ -1,8 +1,6 @@
 package com.ociweb.mqtt;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import static org.junit.Assert.assertTrue;
 
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingReader;
@@ -27,16 +25,13 @@ public class DumpCheckStage extends PronghornStage{
 			int msgIdx = RingReader.getMsgIdx(input);
 			if (msgIdx == MQTTFROM.MSG_MQTT_LOC) {
 						    	
-			        MqttMessage message = new MqttMessage();
-			       
-			        String payload = RingReader.readASCII(input, MQTTFROM.FIELD_PAYLOAD_LOC, new StringBuilder()).toString();
-			        message.setPayload(payload.getBytes());
-			        message.setRetained(false);
-			        message.setQos(RingReader.readInt(input, MQTTFROM.FIELD_QOS_LOC));
-			        
+			       		        
 			        String topic = RingReader.readASCII(input, MQTTFROM.FIELD_TOPIC_LOC, new StringBuilder()).toString();
+			        String payload = RingReader.readASCII(input, MQTTFROM.FIELD_PAYLOAD_LOC, new StringBuilder()).toString();
 	
-	//		        System.err.println(topic+" - "+payload);
+			        
+			        assertTrue(topic.indexOf("/colors/")>0);
+			        assertTrue(payload.indexOf("status")>=0);
 			        
 			
 			}

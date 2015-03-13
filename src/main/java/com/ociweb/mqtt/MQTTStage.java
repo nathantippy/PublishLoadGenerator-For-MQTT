@@ -18,6 +18,7 @@ public class MQTTStage extends PronghornStage {
 	private MqttClient[] connnection = new MqttClient[maxClients]; 	
 	private RingBuffer input;
 	private MqttConnectOptions connOptions;
+	private long messageCount;
 	
 	//	kernel parameters in /etc/sysctl.conf in the format:
 	//		net.ipv4.tcp_tw_reuse=1
@@ -68,9 +69,8 @@ public class MQTTStage extends PronghornStage {
 			        client.setTimeToWait(-1);
 			        client.publish(topic.toString(), message);
 					client.disconnect();
+					messageCount++;
 				//	blockForAllTokens(client);
-					
-				//	System.err.println(hasBlockingTokens(client));
 					
 			        
 			      } catch (MqttException e) {
@@ -140,6 +140,10 @@ public class MQTTStage extends PronghornStage {
 			}
 		}
 		super.shutdown();
+	}
+
+	public long getMessageCount() {
+		return messageCount;
 	}
 
 }

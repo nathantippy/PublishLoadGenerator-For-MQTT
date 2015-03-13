@@ -1,8 +1,14 @@
 package com.ociweb.mqtt;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
+import com.ociweb.jfast.primitive.adapter.FASTInputByteBuffer;
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingBufferConfig;
@@ -16,14 +22,12 @@ public class Main {
     private static final int MISSING_REQ_ARG = -2;
     private static final int MISSING_ARG_VALUE = -1;
     
+    private static final int CLIENTS_PER_PIPE_BITS = 12;//generate 4K clients per pipe
+    
+    //To start up a broker
+    // mosquitto_sub -t "#" -v -k 3
+    //
 	public Main() {
-			
-		 
-		 //TODO: add CSV file load for Keven this week.
-		 //TODO: add telemetry for YF (must be done next week)
-		 //TODO: set up VMs so we can run 4 at the same time.
-		 	
-		
 	}
 	
     
@@ -35,15 +39,17 @@ public class Main {
         System.out.println(message);
         System.out.println();
         System.out.println("Usage:");
-        System.out.println("       App -b <tcp://localhost:1883> -pre <client id prefix> -q <qos num> -t <topic> -p <payloadWithoutWhitespace>");
+        System.out.println("       java -jar MQTTSim.jar -b <tcp://localhost:1883> -pre <client id prefix> -q <qos num> -t <topic> -p <payloadWithoutWhitespace>");
         System.out.println("       NOTE: only the -b argument is required all others are optional.");
         System.out.println("Arguments:");
         System.out.println("          -b or -broker            URI to broker, must start with tcp://, ssl:// or local://");
-        System.out.println("          -pre or -clientPrefix    prefix to add to all clients simulated by this running instance.");
+        System.out.println("          -pre or -clientPrefix    prefix to add to all simulated clients. Default: client");
         System.out.println("          -q or -qos               quality of service, can be 0, 1, or 2.");
         System.out.println("          -t or -topic             topic to send.");
         System.out.println("          -p or -payload           payload to send. White space in payload is not supported at this time.");       
         System.out.println("          -n or -number            number of concurrent piplines each simulating 4K clients");
+        System.out.println("          -c or -csv               path to CSV file that contains  QoS,topic,payload  (QoS is a number 0, 1, or  2)");
+        
         System.out.println("");
         System.out.println("To support more client connections to a broker instance you may want to adjust this client side setting.");
         System.out.println("    kernel parameters in /etc/sysctl.conf ");
@@ -54,6 +60,7 @@ public class Main {
     }
 	
 	public static void main(String[] args) {
+				
 
 		String server = getReqArg("-broker", "-b", args);// -b tcp://localhost:1883
 		
@@ -69,7 +76,23 @@ public class Main {
 	        printHelp("QOS should be a number 0, 1, or 2");
 	        System.exit(BAD_VALUE);
 		}
+		
+		
+		String csvString = getOptArg("-csv","-c",args, null); //-c <path to csv content file>	
+		MappedByteBuffer csvData = null;
+		if (null!=csvString) {			
+				try {
+					FileChannel fileChannel = new RandomAccessFile(new File(csvString), "r").getChannel();
+					csvData = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				} 
 			
+		
+			
+		}
+		
+		
 		int maxPipes = Math.min(16, Math.max(1, Runtime.getRuntime().availableProcessors()/2));
 		
 		String maxPipesString = getOptArg("-number","-n",args,Integer.toString(maxPipes)); //-n 4 
@@ -86,28 +109,75 @@ public class Main {
 			}
 		}
 		
+		System.out.println("BETA 1.2");
+		System.out.println("Total simulated clients: "+((1<<CLIENTS_PER_PIPE_BITS)*maxPipes)+" over "+maxPipes+" total concurrent pipelines" );
 		
 		Main instance = new Main();	
 
-		instance.run(server, qos, clientPrefix, topicString, payloadString, maxPipes);
+		if (null!=csvData) {
+		    //run from csv file data
+			instance.run(server, clientPrefix, maxPipes, csvData);
+		} else {
+			//normal run with fixed single message
+			instance.run(server, clientPrefix, maxPipes, qos, topicString, payloadString);
+		}
+	}
+
+	private void run(String broker, String clientPrefix, int maxPipes,	MappedByteBuffer csvData) {
+
+			RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
+			RingBufferConfig linesConfig = new RingBufferConfig((byte)6,(byte)15,null, FieldReferenceOffsetManager.RAW_BYTES );
+			
+			GraphManager graphManager = new GraphManager();
+					
+			int pipeId = maxPipes;
+			MQTTStage[] outputStages = new MQTTStage[maxPipes];
+			while (--pipeId>=0) {
+	
+				RingBuffer linesRing = new RingBuffer(linesConfig);
+				RingBuffer messagesRing = new RingBuffer(messagesConfig);
+				
+				outputStages[pipeId] = new MQTTStage(graphManager, messagesRing);
+				LineSplitterByteBufferStage lineStage = new LineSplitterByteBufferStage(graphManager, csvData.duplicate(), linesRing);
+				MessageCSVStage messageCSVStage = new MessageCSVStage(graphManager, linesRing, messagesRing, CLIENTS_PER_PIPE_BITS, pipeId, broker, clientPrefix);
+	
+			}
+					
+			StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
+			
+			long start = System.currentTimeMillis();
+			scheduler.startup();		 
+			
+			Scanner scan = new Scanner(System.in);
+			System.out.println("press enter to exit");
+			scan.hasNextLine();
+			
+			System.out.println("exiting...");
+			scheduler.shutdown();
+	
+			long TIMEOUT_SECONDS = 10;
+			scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+			
+			long duration = System.currentTimeMillis() - start;
+			
+			showTotals(maxPipes, outputStages, duration);
 		
 	}
 
-	public void run(String broker, int qos, String clientPrefix, String topicString, String payloadString, int maxPipes) {
-		int clientBits = 12;//generate 4K clients per pipe
-		int pipes = maxPipes;
-		System.out.println("BETA 1.1");
-		System.out.println("Total simulated clients: "+((1<<clientBits)*pipes)+" over "+pipes+" total concurrent pipelines" );
-		
+
+	public void run(String broker, String clientPrefix, final int maxPipes, int qos, String topicString, String payloadString) {
+			
 		RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
-				
-		
+						
 		GraphManager graphManager = new GraphManager();
 		
-		int pipeId = pipes;
-		MessageGenStage[] genStages = new MessageGenStage[pipes];
+		int pipeId = maxPipes;
+		MQTTStage[] outputStages = new MQTTStage[maxPipes];
 		while (--pipeId>=0) {
-			genStages[pipeId] = buildSinglePipeline(messagesConfig, graphManager, clientBits, pipeId, broker, qos, clientPrefix, topicString, payloadString);
+			RingBuffer messagesRing = new RingBuffer(messagesConfig);
+			outputStages[pipeId] = new MQTTStage(graphManager, messagesRing);
+			MessageGenStage messageGenStage = new MessageGenStage(graphManager, messagesRing, CLIENTS_PER_PIPE_BITS, pipeId, broker, qos, clientPrefix, topicString, payloadString);
 		}
 				
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
@@ -121,22 +191,18 @@ public class Main {
 		
 		System.out.println("exiting...");
 		scheduler.shutdown();
-		
-		
+				
 		long TIMEOUT_SECONDS = 40;
-		boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-		if (!cleanExit) {
-			System.out.println("Totals are estimates becuase some messages in flight were lost while shutting down.");
-		}
-		
+		scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
 		long duration = System.currentTimeMillis() - start;
 		
-		showTotals(pipes, genStages, duration);
+		showTotals(maxPipes, outputStages, duration);
 		
 	}
 
 
-	private void showTotals(int pipes, MessageGenStage[] genStages,
+	private void showTotals(int pipes, MQTTStage[] genStages,
 			long duration) {
 		int i;
 		long messages = 0;
@@ -151,17 +217,7 @@ public class Main {
 	}
 	
 
-	private MessageGenStage buildSinglePipeline(RingBufferConfig messagesConfig, GraphManager graphManager, int pipeId, 
-			                                    int base, String server, int qos, 
-			                                    String clientPrefix, String topicString, String payloadString) {
-		RingBuffer messagesRing = new RingBuffer(messagesConfig);
-		assert(messagesRing.maxAvgVarLen>=256) : "messages can be blocks as big as 256";
-		
-		MQTTStage mStage = new MQTTStage(graphManager, messagesRing);			
-		return new MessageGenStage(graphManager, messagesRing, pipeId, base, server, qos, clientPrefix, topicString, payloadString);
-	}
-	
-    private static String getReqArg(String longName, String shortName, String[] args) {
+	private static String getReqArg(String longName, String shortName, String[] args) {
         String prev = null;
         for (String token : args) {
             if (longName.equals(prev) || shortName.equals(prev)) {

@@ -24,9 +24,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
     private	long tailPosCache;
     private long targetValue;
     private final int stepSize;
-    
-    public final int publishCountDownInit;
-    public int publishCountDown;
+
     public final byte[] quoter;
     protected int shutdownPosition = -1;
     
@@ -41,8 +39,6 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 		}
 		
 		stepSize = FieldReferenceOffsetManager.RAW_BYTES.fragDataSize[0];
-		publishCountDownInit = ((outputRing.mask+1)/stepSize)>>1;//count down to only half what the ring can hold
-		publishCountDown = publishCountDownInit;
 		
 	    //NOTE: this block has constants that could be moved up and out
 	    quoter = new byte[256]; //these are all zeros
@@ -58,6 +54,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
     
  
     protected static void resetForNextByteBuffer(LineSplitterByteBufferStage lss) {
+    	lss.activeByteBuffer.clear();
     	lss.quoteCount = 0;
     	lss.prevB = -1;
     	lss.recordStart = 0;    	
@@ -66,49 +63,29 @@ public class LineSplitterByteBufferStage extends PronghornStage {
     
 	@Override
 	public void run() {
-		
-			//if called again by the scheduler do nothing because we already read all the data and finished
-		    if (activeByteBuffer.remaining()>0) {
-		    	shutdownPosition = parseSingleByteBuffer(this, activeByteBuffer);
-				
-		    	shutdown();
-		    }
+
+		    	shutdownPosition = parseSingleByteBuffer(this, activeByteBuffer);			    	
+		    	if (shutdownPosition>=activeByteBuffer.limit()) {
+		    		resetForNextByteBuffer(this);		    		
+		    	}
 			
 	}
 
-	
-	
-	@Override
-	public void shutdown() {
-		postProcessing(this);
-		super.shutdown();
-	}
 
-
-	protected static void postProcessing(LineSplitterByteBufferStage stage) {
-		//confirm end of file
-		 if (stage.shutdownPosition>stage.recordStart) {
-			System.err.println("WARNING: last line of input did not end with LF or CR, possible corrupt or truncated file.  This line was NOT parsed.");
-			//TODO: AA, note that passing this partial line messed up all other fields, so something is broken in the template loader when it is given bad data.
-		 }
-	    stage.activeByteBuffer.position(stage.shutdownPosition);
-	    
-	    //TODO: AA, must do this to write the file, remove this after we fix the file writer to no longer require the blocking stream methods.
-        //before write make sure the tail is moved ahead so we have room to write
-		stage.tailPosCache = spinBlockOnTail(stage.tailPosCache, stage.targetValue, stage.outputRing);
-		stage.targetValue+=stage.stepSize;
-
-		RingBuffer outputRing = stage.outputRing;
-		//send end of file message
-		RingBuffer.publishEOF(outputRing);
-	}
 
 	protected static int parseSingleByteBuffer(LineSplitterByteBufferStage stage, ByteBuffer sourceByteBuffer) {
 		 int position = sourceByteBuffer.position();
 		 int limit = sourceByteBuffer.limit();
 		 
-		 while (position<limit) {
-			 					    		
+         if (stage.tailPosCache < stage.targetValue) {
+		   	stage.tailPosCache = stage.outputRing.tailPos.longValue();
+			if (stage.tailPosCache < stage.targetValue) {				
+				return position;
+			}
+	   	 }
+	    
+		 if (position<limit) {;					    
+			 
 		    		int b = sourceByteBuffer.get(position);		    							    		
 
 					if (isEOL(b) ) {
@@ -122,8 +99,6 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 							
 							sourceByteBuffer.position(stage.recordStart);
 							RingBuffer outputRing = stage.outputRing;
-							//before write make sure the tail is moved ahead so we have room to write
-							stage.tailPosCache = spinBlockOnTail(stage.tailPosCache, stage.targetValue, outputRing); //TOOD: AA, this is blocking and should be upgraded.
 							stage.targetValue+=stage.stepSize;
 							
 							RingBuffer.addMsgIdx(outputRing, 0);
@@ -137,6 +112,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 								sourceByteBuffer.get(dst, 0, len);
 								sourceByteBuffer.position(stage.recordStart);
 								System.err.println("split:"+new String(dst));
+								
 							}
 							
 							RingBuffer.addByteBuffer(outputRing, sourceByteBuffer, len);
@@ -158,7 +134,8 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 		    	position ++;						 
 			 
 		 }
-		return position;
+		 sourceByteBuffer.position(position);
+		 return position;
 	}
 
 

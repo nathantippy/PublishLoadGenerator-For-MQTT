@@ -7,7 +7,6 @@ import static com.ociweb.pronghorn.ring.RingBuffer.headPosition;
 import static com.ociweb.pronghorn.ring.RingBuffer.tailPosition;
 import static com.ociweb.pronghorn.ring.RingBuffer.takeRingByteLen;
 import static com.ociweb.pronghorn.ring.RingBuffer.takeRingByteMetaData;
-import static org.junit.Assert.assertEquals;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
@@ -85,17 +84,12 @@ public class MessageCSVStage extends PronghornStage {
 		 if (RingWriter.tryWriteFragment(outputRing, MQTTFROM.MSG_MQTT_LOC)) {
 			 nextTargetHead += msgSize;
 			 int msgId = RingBuffer.takeMsgIdx(input);
-			 if (msgId<0) {
-				 //end of CSV
-				 shutdown();
-				 return;
-			 }
-			 				 
+		 
 			 RingWriter.writeASCII(outputRing, MQTTFROM.FIELD_SERVER_URI_LOC, server, 0, server.length());		
 			 
 			 int clientId = (int)messageCount&clientMask; //SAME HASH MUST ALSO HAVE THE SAME SERVER!
 			 byte[] clientIdBytes = clientIdLookup[(int)clientId];
-			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length);		
+			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length, Integer.MAX_VALUE);		
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_CLIENT_INDEX_LOC, externalIdValue(clientId));
 			 				 
 			 
@@ -109,20 +103,26 @@ public class MessageCSVStage extends PronghornStage {
 			byte[] data = byteBackingArray(meta, input);
 			int mask = byteMask(input);
 				
-				
+			if (data[mask&(pos+1)]!=',') {
+				throw new RuntimeException("The first char must be 0, 1, or 2 followed by a comma and no spaces, in the CSV");
+			}
 			
+			int qos = (int)(data[mask&pos]-'0');
+			RingWriter.writeInt(outputRing, MQTTFROM.FIELD_QOS_LOC, qos);			 
+
+	        //NOTE: we assume there is no white space around the comma	
+			int j = 2;
+			while (j<data.length && data[mask&(pos+j)]!=',') {
+				j++;
+			}
+
+			RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, data, 2+pos, j-2, mask);		
+			RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, data, j+1+pos, len-(j+1), mask);					
 			
-				
-			 //qos,topic,payload
-//			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_QOS_LOC, qos);			 
-//			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, topic, 0, topic.length);		
-//			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, payload, 0, payload.length);					
-//			 
+			RingWriter.publishWrites(outputRing);
+			RingBuffer.releaseReadLock(input); 
 			 
-			 
-			 RingWriter.publishWrites(outputRing);
-			 
-			 messageCount++;
+			messageCount++;
 		 } else {
 			 return;
 		 }

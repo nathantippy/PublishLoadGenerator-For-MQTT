@@ -103,6 +103,8 @@
 	        <descriptorRefs>
 	          <descriptorRef>jar-with-dependencies</descriptorRef>
 	        </descriptorRefs>
+	        <finalName>MQTTSim</finalName>	
+	        <appendAssemblyId>false</appendAssemblyId>        
 	      </configuration>
 	      <executions>
           <execution>

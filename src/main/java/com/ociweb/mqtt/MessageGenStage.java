@@ -77,14 +77,14 @@ public class MessageGenStage extends PronghornStage {
 			 
 			 int clientId = (int)messageCount&clientMask; //SAME HASH MUST ALSO HAVE THE SAME SERVER!
 			 byte[] clientIdBytes = clientIdLookup[(int)clientId];
-			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length);		
+			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length, Integer.MAX_VALUE);		
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_CLIENT_INDEX_LOC, externalIdValue(clientId));
 			 				 
 			 
 			 
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_QOS_LOC, qos);			 
-			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, topic, 0, topic.length);		
-			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, payload, 0, payload.length);					
+			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, topic, 0, topic.length, Integer.MAX_VALUE);		
+			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, payload, 0, payload.length, Integer.MAX_VALUE);					
 			 
 			 
 			 

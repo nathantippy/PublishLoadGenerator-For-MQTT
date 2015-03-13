@@ -1,11 +1,10 @@
 package com.ociweb.mqtt;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -24,7 +23,7 @@ public class TestPipeline {
 	@Test
 	public void runtTest() {
 		
-		InputStream demoFileStream = TestPipeline.class.getResourceAsStream("/mqttTemplate.xml");    
+		InputStream demoFileStream = TestPipeline.class.getResourceAsStream("/exampleMessages.csv");    
 		assert(null!=demoFileStream);
 		
 		byte[] data = null;
@@ -58,14 +57,11 @@ public class TestPipeline {
 		DumpCheckStage dumpStage = new DumpCheckStage(graphManager, messagesRingBuffer);
 		
 		//TODO: if I start this up where will the messages go?
-//		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
-//		scheduler.startup();
-//		
-//    //    scheduler.shutdown();
-//		
-//		
-//		long TIMEOUT_SECONDS = 40;
-//		boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
+		scheduler.startup();
+
+		long TIMEOUT_SECONDS = 2;
+		boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		
 		
 		
