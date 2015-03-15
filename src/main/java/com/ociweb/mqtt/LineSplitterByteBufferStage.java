@@ -78,7 +78,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 		 int limit = sourceByteBuffer.limit();
 		 
          if (stage.tailPosCache < stage.targetValue) {
-		   	stage.tailPosCache = stage.outputRing.tailPos.longValue();
+		   	stage.tailPosCache = RingBuffer.tailPosition(stage.outputRing);
 			if (stage.tailPosCache < stage.targetValue) {				
 				return position;
 			}

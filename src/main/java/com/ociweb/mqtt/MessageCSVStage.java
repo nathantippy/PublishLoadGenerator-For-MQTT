@@ -75,7 +75,7 @@ public class MessageCSVStage extends PronghornStage {
 	public void run() {
 				
         if (headPosCache < nextTargetHead) {
-			headPosCache = input.headPos.longValue();
+			headPosCache = RingBuffer.headPosition(input);
 			if (headPosCache < nextTargetHead) {
 				return; //come back later when we find more content
 			}
