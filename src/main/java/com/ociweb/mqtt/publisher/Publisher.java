@@ -1,4 +1,4 @@
-package com.ociweb.mqtt;
+package com.ociweb.mqtt.publisher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,11 +12,12 @@ import com.ociweb.jfast.primitive.adapter.FASTInputByteBuffer;
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingBufferConfig;
+import com.ociweb.pronghorn.stage.monitor.MonitorConsoleStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 import com.ociweb.pronghorn.stage.scheduling.StageScheduler;
 import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 
-public class Main {
+public class Publisher {
 
 	private static final int BAD_VALUE = -3;
     private static final int MISSING_REQ_ARG = -2;
@@ -27,7 +28,7 @@ public class Main {
     //To start up a broker
     // mosquitto_sub -t "#" -v -k 3
     //
-	public Main() {
+	public Publisher() {
 	}
 	
     
@@ -112,7 +113,7 @@ public class Main {
 		System.out.println("BETA 1.2");
 		System.out.println("Total simulated clients: "+((1<<CLIENTS_PER_PIPE_BITS)*maxPipes)+" over "+maxPipes+" total concurrent pipelines" );
 		
-		Main instance = new Main();	
+		Publisher instance = new Publisher();	
 
 		if (null!=csvData) {
 		    //run from csv file data
@@ -143,25 +144,7 @@ public class Main {
 	
 			}
 					
-			StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
-			
-			long start = System.currentTimeMillis();
-			scheduler.startup();		 
-			
-			Scanner scan = new Scanner(System.in);
-			System.out.println("press enter to exit");
-			scan.hasNextLine();
-			
-			System.out.println("exiting...");
-			scheduler.shutdown();
-	
-			long TIMEOUT_SECONDS = 10;
-			scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-			
-			long duration = System.currentTimeMillis() - start;
-			
-			showTotals(maxPipes, outputStages, duration);
+			run(maxPipes, graphManager, outputStages);
 		
 	}
 
@@ -180,7 +163,20 @@ public class Main {
 			MessageGenStage messageGenStage = new MessageGenStage(graphManager, messagesRing, CLIENTS_PER_PIPE_BITS, pipeId, broker, qos, clientPrefix, topicString, payloadString);
 		}
 				
-		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
+		run(maxPipes, graphManager, outputStages);
+		
+	}
+
+
+	private void run(final int maxPipes, GraphManager graphManager,	MQTTStage[] outputStages) {
+		
+		//Add monitoring
+		MonitorConsoleStage.attach(graphManager);
+				
+		//Enable batching
+		GraphManager.enableBatching(graphManager);
+		
+		StageScheduler scheduler = new ThreadPerStageScheduler(graphManager);
 		
 		long start = System.currentTimeMillis();
 		scheduler.startup();		 
@@ -192,13 +188,12 @@ public class Main {
 		System.out.println("exiting...");
 		scheduler.shutdown();
 				
-		long TIMEOUT_SECONDS = 40;
+		long TIMEOUT_SECONDS = 10;
 		scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
 		long duration = System.currentTimeMillis() - start;
 		
 		showTotals(maxPipes, outputStages, duration);
-		
 	}
 
 

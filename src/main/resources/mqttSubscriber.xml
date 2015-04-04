@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+
+     <!--  add support for retained boolean by sending a different template?  -->
+     
+   <template name="MQTT" id="300" xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+     <string name="Topic" id="301">
+            <copy/>
+     </string>
+     <bytevector name="Payload" id="302">
+            <copy/>
+     </bytevector>     
+     <uInt32 name="MetaMask" id="303">
+            <copy/>  <!-- OQS 2bits Retained 1bit Duplicate 1bit -->
+     </uInt32>
+   </template>
+
+</templates>

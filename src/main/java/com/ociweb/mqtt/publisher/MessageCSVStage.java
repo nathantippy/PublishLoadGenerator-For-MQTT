@@ -1,4 +1,4 @@
-package com.ociweb.mqtt;
+package com.ociweb.mqtt.publisher;
 
 import static com.ociweb.pronghorn.ring.RingBuffer.byteBackingArray;
 import static com.ociweb.pronghorn.ring.RingBuffer.byteMask;
@@ -34,11 +34,8 @@ public class MessageCSVStage extends PronghornStage {
 	
 	private final int msgSize = FieldReferenceOffsetManager.RAW_BYTES.fragDataSize[0];
 
-
-	//TODO: after this graph shuts down run it again 
-	//TODO: must parse bytes and put them in these 3 fields.
-	
-	protected MessageCSVStage(GraphManager graphManager, RingBuffer input, RingBuffer output, int maxClientsBits, int base, String server, String clientPrefix) {
+	//TODO: AA, upgrade to new API
+	public MessageCSVStage(GraphManager graphManager, RingBuffer input, RingBuffer output, int maxClientsBits, int base, String server, String clientPrefix) {
 		
 		super(graphManager, NONE, output);
 		this.outputRing = output;
@@ -66,7 +63,11 @@ public class MessageCSVStage extends PronghornStage {
 		return messageCount;
 	}
 	
-	//TODO: need prefix for cleint id for this run so we can share them  acroos multiiple machines.
+	/** use  prefix for client id for this run so we can share the load across multiple machines.
+	 * 
+	 * @param value
+	 * @return
+	 */
     private int externalIdValue(int value) {
     	return (value<<4)|base;
     }
@@ -91,8 +92,7 @@ public class MessageCSVStage extends PronghornStage {
 			 byte[] clientIdBytes = clientIdLookup[(int)clientId];
 			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length, Integer.MAX_VALUE);		
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_CLIENT_INDEX_LOC, externalIdValue(clientId));
-			 				 
-			 
+			 				 			 
 			 	 
 	        int meta = takeRingByteMetaData(input);
 	        int len = takeRingByteLen(input);

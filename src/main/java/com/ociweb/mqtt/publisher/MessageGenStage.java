@@ -1,4 +1,4 @@
-package com.ociweb.mqtt;
+package com.ociweb.mqtt.publisher;
 
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingWriter;
@@ -53,25 +53,20 @@ public class MessageGenStage extends PronghornStage {
 		return messageCount;
 	}
 	
-	//TODO: need prefix for cleint id for this run so we can share them  acroos multiiple machines.
+	/** use  prefix for client id for this run so we can share the load across multiple machines.
+	 * 
+	 * @param value
+	 * @return
+	 */
     private int externalIdValue(int value) {
     	return (value<<4)|base;
     }
-	
-	@Override
-	public void startup() {
-		super.startup();
-	}
-	
-	@Override
-	public void shutdown() {
-		super.shutdown();
-	}
 
 	@Override
 	public void run() {
-				
-		 if (RingWriter.tryWriteFragment(outputRing, MQTTFROM.MSG_MQTT_LOC)) {
+			
+		//TODO: AAA, how does an input like this know to stop?
+		 while (RingWriter.tryWriteFragment(outputRing, MQTTFROM.MSG_MQTT_LOC)) {
 			 				 
 			 RingWriter.writeASCII(outputRing, MQTTFROM.FIELD_SERVER_URI_LOC, server, 0, server.length());		
 			 
@@ -91,9 +86,7 @@ public class MessageGenStage extends PronghornStage {
 			 RingWriter.publishWrites(outputRing);
 			 
 			 messageCount++;
-		 } else {
-			 return;
-		 }
+		 } 
 	
 	}
 

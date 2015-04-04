@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import com.ociweb.mqtt.publisher.LineSplitterByteBufferStage;
+import com.ociweb.mqtt.publisher.MQTTFROM;
+import com.ociweb.mqtt.publisher.MessageCSVStage;
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingBufferConfig;
@@ -55,8 +58,7 @@ public class TestPipeline {
 		MessageCSVStage csvStage = new MessageCSVStage(graphManager, linesRingBuffer, messagesRingBuffer, maxClientsBits, base, server, clientPrefix);
 		
 		DumpCheckStage dumpStage = new DumpCheckStage(graphManager, messagesRingBuffer);
-		
-		//TODO: if I start this up where will the messages go?
+
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(graphManager));
 		scheduler.startup();
 

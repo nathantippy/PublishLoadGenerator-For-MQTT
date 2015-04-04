@@ -13,7 +13,13 @@
           <artifactId>mqtt-client</artifactId>
           <version>0.4.0</version>
         </dependency>
-
+		
+		<dependency>
+		      <groupId>org.dna.mqtt</groupId>
+		      <artifactId>moquette-broker</artifactId>
+		      <version>0.6</version>
+		</dependency>
+		
       	<dependency>
 	      <groupId>junit</groupId>
 	      <artifactId>junit</artifactId>
@@ -63,6 +69,16 @@
       <url>scpexe://extranet.ociweb.com/pronghorn/repo</url>
       <layout>default</layout>
     </repository>
+     <repository>
+	    <id>bintray</id>
+	    <url>http://dl.bintray.com/andsel/maven/</url>
+	    <releases>
+	      <enabled>true</enabled>
+	    </releases>
+	    <snapshots>
+	      <enabled>false</enabled>
+	    </snapshots>
+	  </repository>
   </repositories>
 
   
