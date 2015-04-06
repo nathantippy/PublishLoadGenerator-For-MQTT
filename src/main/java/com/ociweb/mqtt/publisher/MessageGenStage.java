@@ -23,6 +23,8 @@ public class MessageGenStage extends PronghornStage {
 	private final byte[] topic;
 	private final byte[] payload;
 	
+	public final int MAX_MESSAGES = 100;
+	
 	protected MessageGenStage(GraphManager graphManager, RingBuffer output, int maxClientsBits, int base, String server, int qos, 
 			                  String clientPrefix, String topicString, String payloadString) {
 		
@@ -65,8 +67,8 @@ public class MessageGenStage extends PronghornStage {
 	@Override
 	public void run() {
 			
-		//TODO: AAA, how does an input like this know to stop?
-		 while (RingWriter.tryWriteFragment(outputRing, MQTTFROM.MSG_MQTT_LOC)) {
+		 int i = MAX_MESSAGES;//only write this many before allowing the scheduler to again have control 
+		 while (--i>=0 &&  RingWriter.tryWriteFragment(outputRing, MQTTFROM.MSG_MQTT_LOC)) {
 			 				 
 			 RingWriter.writeASCII(outputRing, MQTTFROM.FIELD_SERVER_URI_LOC, server, 0, server.length());		
 			 
@@ -74,15 +76,13 @@ public class MessageGenStage extends PronghornStage {
 			 byte[] clientIdBytes = clientIdLookup[(int)clientId];
 			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_CLIENT_ID_LOC, clientIdBytes, 0, clientIdBytes.length, Integer.MAX_VALUE);		
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_CLIENT_INDEX_LOC, externalIdValue(clientId));
-			 				 
-			 
+			 				 		 
 			 
 			 RingWriter.writeInt(outputRing, MQTTFROM.FIELD_QOS_LOC, qos);			 
 			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_TOPIC_LOC, topic, 0, topic.length, Integer.MAX_VALUE);		
 			 RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, payload, 0, payload.length, Integer.MAX_VALUE);					
 			 
-			 
-			 
+			 			 
 			 RingWriter.publishWrites(outputRing);
 			 
 			 messageCount++;

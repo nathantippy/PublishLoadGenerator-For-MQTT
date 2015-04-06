@@ -139,9 +139,11 @@ public class Publisher {
 				RingBuffer messagesRing = new RingBuffer(messagesConfig);
 				
 				outputStages[pipeId] = new MQTTStage(graphManager, messagesRing);
-				LineSplitterByteBufferStage lineStage = new LineSplitterByteBufferStage(graphManager, csvData.duplicate(), linesRing);
+				
 				MessageCSVStage messageCSVStage = new MessageCSVStage(graphManager, linesRing, messagesRing, CLIENTS_PER_PIPE_BITS, pipeId, broker, clientPrefix);
-	
+				
+				LineSplitterByteBufferStage lineStage = new LineSplitterByteBufferStage(graphManager, csvData.duplicate(), linesRing);
+				
 			}
 					
 			run(maxPipes, graphManager, outputStages);
@@ -171,10 +173,10 @@ public class Publisher {
 	private void run(final int maxPipes, GraphManager graphManager,	MQTTStage[] outputStages) {
 		
 		//Add monitoring
-		MonitorConsoleStage.attach(graphManager);
+		//MonitorConsoleStage.attach(graphManager);
 				
 		//Enable batching
-		GraphManager.enableBatching(graphManager);
+		//GraphManager.enableBatching(graphManager);
 		
 		StageScheduler scheduler = new ThreadPerStageScheduler(graphManager);
 		
@@ -197,8 +199,8 @@ public class Publisher {
 	}
 
 
-	private void showTotals(int pipes, MQTTStage[] genStages,
-			long duration) {
+	private void showTotals(int pipes, MQTTStage[] genStages, long duration) {
+		
 		int i;
 		long messages = 0;
 		i = genStages.length;

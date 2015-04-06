@@ -1,8 +1,5 @@
 package com.ociweb.mqtt.publisher;
 
-import static com.ociweb.pronghorn.ring.RingBuffer.spinBlockOnTail;
-import static com.ociweb.pronghorn.ring.RingBuffer.tailPosition;
-
 import java.nio.ByteBuffer;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
@@ -21,8 +18,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 	public int recordStart = 0;
 	
 	public long recordCount = 0;
-    private	long tailPosCache;
-    private long targetValue;
+
     private final int stepSize;
 
     public final byte[] quoter;
@@ -33,7 +29,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
     	this.activeByteBuffer=sourceByteBuffer;
     	
     	this.outputRing=outputRing;
-    	
+        
 		if (RingBuffer.from(outputRing) != FieldReferenceOffsetManager.RAW_BYTES) {
 			throw new UnsupportedOperationException("This class can only be used with the very simple RAW_BYTES catalog of messages.");
 		}
@@ -43,13 +39,12 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 	    //NOTE: this block has constants that could be moved up and out
 	    quoter = new byte[256]; //these are all zeros
 	    quoter['"'] = 1; //except for the value of quote.						
-		int fill =1+outputRing.mask - stepSize;
-		tailPosCache = tailPosition(outputRing);
-		targetValue = tailPosCache-fill;
+
 		if (outputRing.maxAvgVarLen<1) {
 			throw new UnsupportedOperationException();
 		}
 		resetForNextByteBuffer(this);
+
     }
     
  
@@ -60,6 +55,11 @@ public class LineSplitterByteBufferStage extends PronghornStage {
     	lss.recordStart = 0;    	
     }
     
+
+    @Override
+    public void startup() {    	
+    	RingBuffer.initLowLevelWriter(outputRing);
+    }
     
 	@Override
 	public void run() {
@@ -72,19 +72,17 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 	}
 
 
-
 	protected static int parseSingleByteBuffer(LineSplitterByteBufferStage stage, ByteBuffer sourceByteBuffer) {
 		 int position = sourceByteBuffer.position();
 		 int limit = sourceByteBuffer.limit();
 		 
-         if (stage.tailPosCache < stage.targetValue) {
-		   	stage.tailPosCache = RingBuffer.tailPosition(stage.outputRing);
-			if (stage.tailPosCache < stage.targetValue) {				
-				return position;
-			}
-	   	 }
-	    
-		 if (position<limit) {;					    
+		 
+		 if (!RingBuffer.roomToLowLevelWrite(stage.outputRing, stage.stepSize)) {
+			 return position;
+		 }
+		// System.err.println("read data");
+		 	    
+		 if (position<limit) {					    
 			 
 		    		int b = sourceByteBuffer.get(position);		    							    		
 
@@ -99,7 +97,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 							
 							sourceByteBuffer.position(stage.recordStart);
 							RingBuffer outputRing = stage.outputRing;
-							stage.targetValue+=stage.stepSize;
+							RingBuffer.confirmLowLevelWrite(stage.outputRing, stage.stepSize);
 							
 							RingBuffer.addMsgIdx(outputRing, 0);
 							int bytePos = outputRing.byteWorkingHeadPos.value;    	
