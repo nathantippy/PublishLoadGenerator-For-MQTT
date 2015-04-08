@@ -80,7 +80,6 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 		 if (!RingBuffer.roomToLowLevelWrite(stage.outputRing, stage.stepSize)) {
 			 return position;
 		 }
-		// System.err.println("read data");
 		 	    
 		 if (position<limit) {					    
 			 

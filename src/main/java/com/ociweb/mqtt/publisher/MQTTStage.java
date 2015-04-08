@@ -139,7 +139,6 @@ public class MQTTStage extends PronghornStage {
 				}
 			}
 		}
-		super.shutdown();
 	}
 
 	public long getMessageCount() {

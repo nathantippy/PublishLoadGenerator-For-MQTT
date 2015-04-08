@@ -27,7 +27,6 @@ import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
 
 public class MQTTSubscribe extends PronghornStage {
-
 	
 	protected static final int QOS_BITS = 2;
 	protected static final int RET_BITS = 1;
