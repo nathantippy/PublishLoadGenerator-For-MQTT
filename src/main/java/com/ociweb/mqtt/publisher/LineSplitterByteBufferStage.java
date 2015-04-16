@@ -112,8 +112,8 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 								
 							}
 							
-							RingBuffer.addByteBuffer(outputRing, sourceByteBuffer, len);
-							RingBuffer.addBytePosAndLen(outputRing.buffer, outputRing.mask, outputRing.workingHeadPos, outputRing.bytesHeadPos.get(), bytePos, len);
+							RingBuffer.copyByteBuffer(sourceByteBuffer, len, outputRing);
+							RingBuffer.addBytePosAndLen(outputRing, bytePos, len);
 							
 							stage.recordCount++;
 
