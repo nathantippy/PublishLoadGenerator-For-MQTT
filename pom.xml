@@ -30,7 +30,7 @@
 		</dependency>
 		<dependency>
 	  		<groupId>com.ociweb</groupId>
-	  		<artifactId>jFAST</artifactId>
+	  		<artifactId>Pronghorn</artifactId>
 	  		<version>0.0.1-SNAPSHOT</version>
     	</dependency>
 		<dependency>
@@ -57,12 +57,10 @@
     <repository>
       <releases>
         <enabled>false</enabled>
-        <updatePolicy>always</updatePolicy>
         <checksumPolicy>warn</checksumPolicy>
       </releases>
       <snapshots>
         <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
         <checksumPolicy>warn</checksumPolicy>
       </snapshots>
       <id>ssh-repository</id>
