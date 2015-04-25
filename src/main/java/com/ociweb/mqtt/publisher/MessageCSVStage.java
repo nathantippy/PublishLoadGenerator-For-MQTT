@@ -113,7 +113,7 @@ public class MessageCSVStage extends PronghornStage {
 				RingWriter.writeBytes(outputRing, MQTTFROM.FIELD_PAYLOAD_LOC, data, j+1+pos, len-(j+1), mask);					
 				
 				RingWriter.publishWrites(outputRing);
-				RingBuffer.releaseReadLock(inputRing); 
+				RingBuffer.readBytesAndreleaseReadLock(inputRing); 
 				 
 				messageCount++;
 			 } else {
