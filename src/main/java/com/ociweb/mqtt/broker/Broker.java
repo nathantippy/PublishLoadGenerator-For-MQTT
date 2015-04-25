@@ -2,16 +2,10 @@ package com.ociweb.mqtt.broker;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
 
-import org.dna.mqtt.moquette.messaging.spi.impl.SimpleMessaging;
-import org.dna.mqtt.moquette.server.*;
-import org.dna.mqtt.moquette.server.netty.NettyAcceptor;
-
+import org.dna.mqtt.moquette.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.dna.mqtt.commons.Constants;
 
 public class Broker {
 

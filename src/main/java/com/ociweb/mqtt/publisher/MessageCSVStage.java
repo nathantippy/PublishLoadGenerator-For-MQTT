@@ -3,12 +3,8 @@ package com.ociweb.mqtt.publisher;
 import static com.ociweb.pronghorn.ring.RingBuffer.byteBackingArray;
 import static com.ociweb.pronghorn.ring.RingBuffer.byteMask;
 import static com.ociweb.pronghorn.ring.RingBuffer.bytePosition;
-import static com.ociweb.pronghorn.ring.RingBuffer.headPosition;
-import static com.ociweb.pronghorn.ring.RingBuffer.tailPosition;
 import static com.ociweb.pronghorn.ring.RingBuffer.takeRingByteLen;
 import static com.ociweb.pronghorn.ring.RingBuffer.takeRingByteMetaData;
-
-import java.util.HashMap;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;

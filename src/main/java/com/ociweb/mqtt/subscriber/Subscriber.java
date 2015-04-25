@@ -9,7 +9,6 @@ import com.ociweb.pronghorn.ring.RingBufferConfig;
 import com.ociweb.pronghorn.ring.loader.TemplateHandler;
 import com.ociweb.pronghorn.stage.ConsoleStage;
 import com.ociweb.pronghorn.stage.monitor.MonitorConsoleStage;
-import com.ociweb.pronghorn.stage.monitor.MonitorFROM;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 import com.ociweb.pronghorn.stage.scheduling.StageScheduler;
 import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;

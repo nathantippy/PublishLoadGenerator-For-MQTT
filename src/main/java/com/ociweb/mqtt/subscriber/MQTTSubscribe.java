@@ -3,11 +3,7 @@ package com.ociweb.mqtt.subscriber;
 import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFieldLocator;
 import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupTemplateLocator;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
-
-import org.dna.mqtt.moquette.server.Server;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
