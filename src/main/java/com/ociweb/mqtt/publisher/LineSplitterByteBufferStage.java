@@ -57,8 +57,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
     
 
     @Override
-    public void startup() {    	
-    	RingBuffer.initLowLevelWriter(outputRing);
+    public void startup() {
     }
     
 	@Override
