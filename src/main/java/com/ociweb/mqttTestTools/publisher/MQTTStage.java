@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.publisher;
+package com.ociweb.mqttTestTools.publisher;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttClient;

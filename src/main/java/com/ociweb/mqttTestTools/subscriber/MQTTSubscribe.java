@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.subscriber;
+package com.ociweb.mqttTestTools.subscriber;
 
 import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFieldLocator;
 import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupTemplateLocator;

@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.publisher;
+package com.ociweb.mqttTestTools.publisher;
 
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingWriter;

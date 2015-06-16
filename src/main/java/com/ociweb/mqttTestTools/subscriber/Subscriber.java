@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.subscriber;
+package com.ociweb.mqttTestTools.subscriber;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingBufferConfig;
-import com.ociweb.pronghorn.ring.loader.TemplateHandler;
+import com.ociweb.pronghorn.ring.schema.loader.TemplateHandler;
 import com.ociweb.pronghorn.stage.ConsoleStage;
 import com.ociweb.pronghorn.stage.monitor.MonitorConsoleStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;

@@ -2,7 +2,7 @@ package com.ociweb.mqtt;
 
 import static org.junit.Assert.assertTrue;
 
-import com.ociweb.mqtt.publisher.MQTTFROM;
+import com.ociweb.mqttTestTools.publisher.MQTTFROM;
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.ring.RingReader;
 import com.ociweb.pronghorn.stage.PronghornStage;

@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.publisher;
+package com.ociweb.mqttTestTools.publisher;
 
 import static com.ociweb.pronghorn.ring.RingBuffer.byteBackingArray;
 import static com.ociweb.pronghorn.ring.RingBuffer.byteMask;

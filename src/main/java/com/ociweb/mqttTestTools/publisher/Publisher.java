@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.publisher;
+package com.ociweb.mqttTestTools.publisher;
 
 import java.io.File;
 import java.io.RandomAccessFile;

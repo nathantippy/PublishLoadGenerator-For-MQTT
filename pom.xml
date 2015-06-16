@@ -111,7 +111,7 @@
 	      <configuration>
 	        <archive>
 	          <manifest>
-	            <mainClass>com.ociweb.mqtt.Main</mainClass>
+	            <mainClass>com.ociweb.mqttTestTools.publisher.Publisher</mainClass>
 	          </manifest>
 	        </archive>
 	        <descriptorRefs>

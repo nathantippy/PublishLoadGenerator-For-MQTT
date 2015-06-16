@@ -1,4 +1,4 @@
-package com.ociweb.mqtt.publisher;
+package com.ociweb.mqttTestTools.publisher;
 
 import java.nio.ByteBuffer;
 
@@ -98,7 +98,7 @@ public class LineSplitterByteBufferStage extends PronghornStage {
 							RingBuffer.confirmLowLevelWrite(stage.outputRing, stage.stepSize);
 							
 							RingBuffer.addMsgIdx(outputRing, 0);
-							int bytePos = outputRing.byteWorkingHeadPos.value;    	
+							int bytePos = RingBuffer.bytesWorkingHeadPosition(outputRing);    	
 
 							//debug show the lines
 							boolean debug = false;
