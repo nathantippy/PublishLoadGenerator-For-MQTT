@@ -7,8 +7,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingReader;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeReader;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -16,17 +16,17 @@ public class MQTTStage extends PronghornStage {
 	
 	private final int maxClients = (1<<16);
 	private MqttClient[] connnection = new MqttClient[maxClients]; 	
-	private RingBuffer input;
+	private Pipe input;
 	private MqttConnectOptions connOptions;
 	private long messageCount;
 	
 	//	kernel parameters in /etc/sysctl.conf in the format:
 	//		net.ipv4.tcp_tw_reuse=1
 		
-	protected MQTTStage(GraphManager graphManager, RingBuffer input) {
+	protected MQTTStage(GraphManager graphManager, Pipe input) {
 		super(graphManager, input, NONE);
 		this.input = input;
-		assert(MQTTFROM.from == RingBuffer.from(input));
+		assert(MQTTFROM.from == Pipe.from(input));
 		connOptions = new MqttConnectOptions();
 		connOptions.setCleanSession(true);
 		connOptions.setKeepAliveInterval(0);
@@ -46,9 +46,9 @@ public class MQTTStage extends PronghornStage {
 		
 		
 		//send one text for every fragment, just a dumb test.
-		while (RingReader.tryReadFragment(input)) {
+		while (PipeReader.tryReadFragment(input)) {
 		
-			int msgIdx = RingReader.getMsgIdx(input);
+			int msgIdx = PipeReader.getMsgIdx(input);
 			if (msgIdx == MQTTFROM.MSG_MQTT_LOC) {
 			
 			    MqttClient client = lookupClientConnection();
@@ -56,12 +56,12 @@ public class MQTTStage extends PronghornStage {
 			    try {
 			        MqttMessage message = new MqttMessage();
 			       
-			        String payload = RingReader.readASCII(input, MQTTFROM.FIELD_PAYLOAD_LOC, new StringBuilder()).toString();
+			        String payload = PipeReader.readASCII(input, MQTTFROM.FIELD_PAYLOAD_LOC, new StringBuilder()).toString();
 			        message.setPayload(payload.getBytes());
 			        message.setRetained(false);
-			        message.setQos(RingReader.readInt(input, MQTTFROM.FIELD_QOS_LOC));
+			        message.setQos(PipeReader.readInt(input, MQTTFROM.FIELD_QOS_LOC));
 			        
-			        String topic = RingReader.readASCII(input, MQTTFROM.FIELD_TOPIC_LOC, new StringBuilder()).toString();
+			        String topic = PipeReader.readASCII(input, MQTTFROM.FIELD_TOPIC_LOC, new StringBuilder()).toString();
 	
 			        //        System.err.println(RingReader.readInt(input, MQTTFROM.FIELD_CLIENT_INDEX_LOC));
 			       
@@ -78,7 +78,7 @@ public class MQTTStage extends PronghornStage {
 			      }
 			}
 			
-		    RingReader.releaseReadLock(input);
+		    PipeReader.releaseReadLock(input);
 
 		}
 	}
@@ -104,13 +104,13 @@ public class MQTTStage extends PronghornStage {
 	}
 
 	private MqttClient lookupClientConnection() {
-		int clientIndex = RingReader.readInt(input, MQTTFROM.FIELD_CLIENT_INDEX_LOC);
+		int clientIndex = PipeReader.readInt(input, MQTTFROM.FIELD_CLIENT_INDEX_LOC);
 		MqttClient client =  connnection[clientIndex];
 		if (null==client) {
 			
-			String clientId = RingReader.readASCII(input, MQTTFROM.FIELD_CLIENT_ID_LOC, new StringBuilder()).toString();	
+			String clientId = PipeReader.readASCII(input, MQTTFROM.FIELD_CLIENT_ID_LOC, new StringBuilder()).toString();	
 			assert(clientId.length()<=23);
-			String server = RingReader.readASCII(input, MQTTFROM.FIELD_SERVER_URI_LOC, new StringBuilder()).toString();
+			String server = PipeReader.readASCII(input, MQTTFROM.FIELD_SERVER_URI_LOC, new StringBuilder()).toString();
 			try {
 				client = connnection[clientIndex] = new MqttClient(server, clientId, new MemoryPersistence());
 			//	client.connect(connOptions);
@@ -118,8 +118,8 @@ public class MQTTStage extends PronghornStage {
 				throw new RuntimeException(e);
 			}//must be smaller than 23 chars			    	
 		}
-		assert(RingReader.readASCII(input, MQTTFROM.FIELD_CLIENT_ID_LOC, new StringBuilder()).toString().equals(client.getClientId()));
-		assert(RingReader.readASCII(input, MQTTFROM.FIELD_SERVER_URI_LOC, new StringBuilder()).toString().equals(client.getServerURI()));
+		assert(PipeReader.readASCII(input, MQTTFROM.FIELD_CLIENT_ID_LOC, new StringBuilder()).toString().equals(client.getClientId()));
+		assert(PipeReader.readASCII(input, MQTTFROM.FIELD_SERVER_URI_LOC, new StringBuilder()).toString().equals(client.getServerURI()));
 		return client;
 	}
 	

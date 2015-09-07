@@ -12,9 +12,9 @@ import org.junit.Test;
 import com.ociweb.mqttTestTools.publisher.LineSplitterByteBufferStage;
 import com.ociweb.mqttTestTools.publisher.MQTTFROM;
 import com.ociweb.mqttTestTools.publisher.MessageCSVStage;
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingBufferConfig;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeConfig;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 import com.ociweb.pronghorn.stage.scheduling.StageScheduler;
 import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
@@ -41,11 +41,11 @@ public class TestPipeline {
 		
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 		
-		RingBufferConfig linesRingBufferConfig = new RingBufferConfig((byte)6,(byte)15,null, FieldReferenceOffsetManager.RAW_BYTES);
-		RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
+		PipeConfig linesRingBufferConfig = new PipeConfig((byte)6,(byte)15,null, FieldReferenceOffsetManager.RAW_BYTES);
+		PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null, MQTTFROM.from);
 		
-		RingBuffer linesRingBuffer = new RingBuffer(linesRingBufferConfig);
-		RingBuffer messagesRingBuffer = new RingBuffer(messagesConfig);
+		Pipe linesRingBuffer = new Pipe(linesRingBufferConfig);
+		Pipe messagesRingBuffer = new Pipe(messagesConfig);
 		
 		
 		GraphManager graphManager = new GraphManager();

@@ -1,7 +1,7 @@
 package com.ociweb.mqttTestTools.subscriber;
 
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFieldLocator;
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupTemplateLocator;
+import static com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager.lookupFieldLocator;
+import static com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager.lookupTemplateLocator;
 
 import java.util.Properties;
 
@@ -15,9 +15,9 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingWriter;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeWriter;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -43,7 +43,7 @@ public class MQTTSubscribe extends PronghornStage {
 	private final Properties configProperties;
 	private MqttClient client;
 	private MqttConnectOptions connOptions;
-	private final RingBuffer outputRing;
+	private final Pipe outputRing;
 	
 	private final FieldReferenceOffsetManager FROM;
 	private final int MSG_MQTT;
@@ -53,13 +53,13 @@ public class MQTTSubscribe extends PronghornStage {
 
 	
 	
-	public MQTTSubscribe(GraphManager gm, RingBuffer outputRing, Properties configProperties) {
+	public MQTTSubscribe(GraphManager gm, Pipe outputRing, Properties configProperties) {
 		super(gm,NONE,outputRing);
 		
 		this.configProperties = configProperties;
 		this.outputRing = outputRing;
 		
-		this.FROM = RingBuffer.from(outputRing);
+		this.FROM = Pipe.from(outputRing);
 		
 		MSG_MQTT = lookupTemplateLocator("MQTT",FROM);  
 		
@@ -113,7 +113,7 @@ public class MQTTSubscribe extends PronghornStage {
 				@Override
 				public void connectionLost(Throwable cause) {
 					log.error("no support for connection lost",cause);
-					RingBuffer.shutdown(outputRing);
+					Pipe.shutdown(outputRing);
 				}
 
 				//TODO: D, topic should be a constant constructed with the ring buffer
@@ -128,18 +128,16 @@ public class MQTTSubscribe extends PronghornStage {
 							       ((message.isRetained() ? 1 : 0) << RET_SHIFT) |
 							       ((message.isDuplicate() ? 1 : 0) << DUP_SHIFT);
 					
-					String top = topic;
-					
 					byte[] payload = message.getPayload();
 					
 					
-					RingWriter.blockWriteFragment(outputRing, MSG_MQTT);
+					PipeWriter.blockWriteFragment(outputRing, MSG_MQTT);
 					
-					RingWriter.writeASCII(outputRing, FIELD_TOPIC, topic);
-					RingWriter.writeBytes(outputRing, FIELD_PAYLOAD, payload);
-					RingWriter.writeInt(outputRing, FIELD_META_MASK, metaMask);
+					PipeWriter.writeASCII(outputRing, FIELD_TOPIC, topic);
+					PipeWriter.writeBytes(outputRing, FIELD_PAYLOAD, payload);
+					PipeWriter.writeInt(outputRing, FIELD_META_MASK, metaMask);
 					
-					RingWriter.publishWrites(outputRing);
+					PipeWriter.publishWrites(outputRing);
 					
 				}
 

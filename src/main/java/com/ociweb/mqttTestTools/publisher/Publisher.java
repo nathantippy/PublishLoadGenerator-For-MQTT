@@ -7,9 +7,9 @@ import java.nio.channels.FileChannel;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingBufferConfig;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeConfig;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 import com.ociweb.pronghorn.stage.scheduling.StageScheduler;
 import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
@@ -123,8 +123,8 @@ public class Publisher {
 
 	private void run(String broker, String clientPrefix, int maxPipes,	MappedByteBuffer csvData) {
 
-			RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
-			RingBufferConfig linesConfig = new RingBufferConfig((byte)6,(byte)15,null, FieldReferenceOffsetManager.RAW_BYTES );
+			PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null, MQTTFROM.from);
+			PipeConfig linesConfig = new PipeConfig((byte)6,(byte)15,null, FieldReferenceOffsetManager.RAW_BYTES );
 			
 			GraphManager graphManager = new GraphManager();
 					
@@ -132,8 +132,8 @@ public class Publisher {
 			MQTTStage[] outputStages = new MQTTStage[maxPipes];
 			while (--pipeId>=0) {
 	
-				RingBuffer linesRing = new RingBuffer(linesConfig);
-				RingBuffer messagesRing = new RingBuffer(messagesConfig);
+				Pipe linesRing = new Pipe(linesConfig);
+				Pipe messagesRing = new Pipe(messagesConfig);
 				
 				outputStages[pipeId] = new MQTTStage(graphManager, messagesRing);
 				
@@ -150,14 +150,14 @@ public class Publisher {
 
 	public void run(String broker, String clientPrefix, final int maxPipes, int qos, String topicString, String payloadString) {
 			
-		RingBufferConfig messagesConfig = new RingBufferConfig((byte)6,(byte)15,null, MQTTFROM.from);
+		PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null, MQTTFROM.from);
 						
 		GraphManager graphManager = new GraphManager();
 		
 		int pipeId = maxPipes;
 		MQTTStage[] outputStages = new MQTTStage[maxPipes];
 		while (--pipeId>=0) {
-			RingBuffer messagesRing = new RingBuffer(messagesConfig);
+			Pipe messagesRing = new Pipe(messagesConfig);
 			outputStages[pipeId] = new MQTTStage(graphManager, messagesRing);
 			MessageGenStage messageGenStage = new MessageGenStage(graphManager, messagesRing, CLIENTS_PER_PIPE_BITS, pipeId, broker, qos, clientPrefix, topicString, payloadString);
 		}

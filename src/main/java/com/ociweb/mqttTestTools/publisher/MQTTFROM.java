@@ -1,7 +1,7 @@
 package com.ociweb.mqttTestTools.publisher;
 
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFieldLocator;
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupTemplateLocator;
+import static com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager.lookupFieldLocator;
+import static com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager.lookupTemplateLocator;
 
 import java.io.IOException;
 
@@ -9,8 +9,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.schema.loader.TemplateHandler;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.schema.loader.TemplateHandler;
 
 public class MQTTFROM {
 

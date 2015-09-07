@@ -3,10 +3,10 @@ package com.ociweb.mqttTestTools.subscriber;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingBufferConfig;
-import com.ociweb.pronghorn.ring.schema.loader.TemplateHandler;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeConfig;
+import com.ociweb.pronghorn.pipe.schema.loader.TemplateHandler;
 import com.ociweb.pronghorn.stage.ConsoleStage;
 import com.ociweb.pronghorn.stage.monitor.MonitorConsoleStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
@@ -28,19 +28,19 @@ public class Subscriber {
 	
 	
 	public static void main(String[] args) {
-		RingBufferConfig ringBufferConfig;
+		PipeConfig ringBufferConfig;
 		
 		try {
 			
 			from = TemplateHandler.loadFrom("/mqttSubscriber.xml");
-			ringBufferConfig = new RingBufferConfig(from, messagesOnRing, maxLengthVarField);
+			ringBufferConfig = new PipeConfig(from, messagesOnRing, maxLengthVarField);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		
 		GraphManager gm = new GraphManager();
-		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
+		Pipe ringBuffer = new Pipe(ringBufferConfig);
 		Properties props = new Properties();
 		props.setProperty("port", "1883");
 		props.setProperty("host", "0.0.0.0");

@@ -3,16 +3,16 @@ package com.ociweb.mqtt;
 import static org.junit.Assert.assertTrue;
 
 import com.ociweb.mqttTestTools.publisher.MQTTFROM;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingReader;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeReader;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
 public class DumpCheckStage extends PronghornStage{
 	
-	public final RingBuffer input;
+	public final Pipe input;
 	
-	public DumpCheckStage(GraphManager graphManager, RingBuffer input) {
+	public DumpCheckStage(GraphManager graphManager, Pipe input) {
 		super(graphManager, input, NONE);
 		this.input = input;
 	}
@@ -21,14 +21,14 @@ public class DumpCheckStage extends PronghornStage{
 	public void run() {
 		
 		//send one text for every fragment, just a dumb test.
-		while (RingReader.tryReadFragment(input)) {
+		while (PipeReader.tryReadFragment(input)) {
 		
-			int msgIdx = RingReader.getMsgIdx(input);
+			int msgIdx = PipeReader.getMsgIdx(input);
 			if (msgIdx == MQTTFROM.MSG_MQTT_LOC) {
 						    	
 			       		        
-			        String topic = RingReader.readASCII(input, MQTTFROM.FIELD_TOPIC_LOC, new StringBuilder()).toString();
-			        String payload = RingReader.readASCII(input, MQTTFROM.FIELD_PAYLOAD_LOC, new StringBuilder()).toString();
+			        String topic = PipeReader.readASCII(input, MQTTFROM.FIELD_TOPIC_LOC, new StringBuilder()).toString();
+			        String payload = PipeReader.readASCII(input, MQTTFROM.FIELD_PAYLOAD_LOC, new StringBuilder()).toString();
 	
 			        
 			        assertTrue(topic.indexOf("/colors/")>0);
@@ -37,7 +37,7 @@ public class DumpCheckStage extends PronghornStage{
 			
 			}
 			
-		    RingReader.releaseReadLock(input);
+		    PipeReader.releaseReadLock(input);
 
 		}
 		

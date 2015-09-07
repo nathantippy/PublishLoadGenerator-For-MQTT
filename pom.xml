@@ -6,6 +6,18 @@
   <description></description>
   <artifactId>MQTTPipeline</artifactId>
   
+     <properties>
+    <java.bootstrap.classes>
+      ${java.home}/lib/rt.jar
+    </java.bootstrap.classes>
+    <java.cryptographic.extension.classes>
+      ${java.home}/lib/jce.jar
+    </java.cryptographic.extension.classes>
+    <java.secure.socket.extension.classes>
+      ${java.home}/lib/jsse.jar
+    </java.secure.socket.extension.classes>
+  </properties>
+  
     <dependencies>
     
         <dependency>
@@ -13,12 +25,6 @@
           <artifactId>mqtt-client</artifactId>
           <version>0.4.0</version>
         </dependency>
-		
-		<dependency>
-		      <groupId>org.dna.mqtt</groupId>
-		      <artifactId>moquette-broker</artifactId>
-		      <version>0.6</version>
-		</dependency>
 		
       	<dependency>
 	      <groupId>junit</groupId>
@@ -78,14 +84,6 @@
 	    </snapshots>
 	  </repository>
   </repositories>
-
-  
-      <distributionManagement>
-        <repository>
-          <id>ssh-repository</id>
-          <url>scpexe://extranet.ociweb.com/pronghorn/repo</url>
-        </repository>
-      </distributionManagement>
 	
 	<build>
         
@@ -106,6 +104,7 @@
  		<target>1.6</target>
 	      </configuration>
 	    </plugin>
+	    
 	    <plugin>
 	      <artifactId>maven-assembly-plugin</artifactId>
 	      <configuration>
@@ -123,13 +122,57 @@
 	      <executions>
           <execution>
             <id>make-assembly</id> <!-- this is used for inheritance merges -->
-            <phase>package</phase> <!-- bind to the packaging phase -->
+            <phase>prepare-package</phase> <!-- bind to the packaging phase -->
             <goals>
               <goal>single</goal>
             </goals>
           </execution>
         </executions>
 	    </plugin>
+	    
+    	       <plugin>
+        <!--groupId>com.pyx4me</groupId-->
+        <groupId>com.github.wvengen</groupId>
+        <artifactId>proguard-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>proguard</id>
+            <phase>package</phase>
+            <goals>
+              <goal>proguard</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <options>
+           <option>-keep public class com.ociweb.mqttTestTools.publisher.Publisher {
+			    public static void main(java.lang.String[]);
+			}</option>
+            <!--  option>-dontobfuscate</option -->
+            
+            <!--  >option>-optimizationpasses 3</option -->
+            <option>-allowaccessmodification</option>
+			<option>-overloadaggressively</option>
+          </options>
+          <libs>
+            <lib>${java.bootstrap.classes}</lib>
+            <lib>${java.cryptographic.extension.classes}</lib>
+            <lib>${java.secure.socket.extension.classes}</lib>
+          </libs>
+          <injar>MQTTSim.jar</injar>
+          <outjar>MQTTSim-small.jar</outjar>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>net.sf.proguard</groupId>
+            <artifactId>proguard-base</artifactId>
+            <version>4.10</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </plugin>
+	    
+	    
 	  </plugins>
 	</build>	  
 </project>
