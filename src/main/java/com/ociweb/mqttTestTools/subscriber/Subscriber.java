@@ -49,7 +49,7 @@ public class Subscriber {
 		MQTTSubscribe broker = new MQTTSubscribe(gm, ringBuffer, props);		
 		ConsoleStage console = new ConsoleStage(gm, ringBuffer);
 		
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, consoleRate , console );
+		GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, consoleRate , console );
 		
 		MonitorConsoleStage.attach(gm);
 				
