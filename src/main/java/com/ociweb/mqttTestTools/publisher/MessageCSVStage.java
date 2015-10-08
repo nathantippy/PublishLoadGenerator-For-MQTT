@@ -72,7 +72,7 @@ public class MessageCSVStage extends PronghornStage {
 	@Override
 	public void run() {
 				
-		while (Pipe.contentToLowLevelRead(inputRing, msgSize)){	
+		while (Pipe.hasContentToRead(inputRing, msgSize)){	
 						
 			 if (PipeWriter.tryWriteFragment(outputRing, MQTTFROM.MSG_MQTT_LOC)) {
 				 Pipe.confirmLowLevelRead(inputRing, msgSize);
