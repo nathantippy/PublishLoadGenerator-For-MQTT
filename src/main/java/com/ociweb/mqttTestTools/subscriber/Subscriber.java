@@ -4,6 +4,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.MessageSchemaDynamic;
 import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.pipe.PipeConfig;
 import com.ociweb.pronghorn.pipe.schema.loader.TemplateHandler;
@@ -33,7 +34,7 @@ public class Subscriber {
 		try {
 			
 			from = TemplateHandler.loadFrom("/mqttSubscriber.xml");
-			ringBufferConfig = new PipeConfig(from, messagesOnRing, maxLengthVarField);
+			ringBufferConfig = new PipeConfig( new MessageSchemaDynamic(from), messagesOnRing, maxLengthVarField);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);

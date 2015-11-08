@@ -8,8 +8,10 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.MessageSchemaDynamic;
 import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.pipe.PipeConfig;
+import com.ociweb.pronghorn.pipe.RawDataSchema;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 import com.ociweb.pronghorn.stage.scheduling.StageScheduler;
 import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
@@ -123,8 +125,8 @@ public class Publisher {
 
 	private void run(String broker, String clientPrefix, int maxPipes,	MappedByteBuffer csvData) {
 
-			PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null, MQTTFROM.from);
-			PipeConfig linesConfig = new PipeConfig((byte)6,(byte)15,null, FieldReferenceOffsetManager.RAW_BYTES );
+			PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null,  new MessageSchemaDynamic(MQTTFROM.from));
+			PipeConfig linesConfig = new PipeConfig((byte)6,(byte)15,null, RawDataSchema.instance);
 			
 			GraphManager graphManager = new GraphManager();
 					
@@ -150,7 +152,7 @@ public class Publisher {
 
 	public void run(String broker, String clientPrefix, final int maxPipes, int qos, String topicString, String payloadString) {
 			
-		PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null, MQTTFROM.from);
+		PipeConfig messagesConfig = new PipeConfig((byte)6,(byte)15,null,  new MessageSchemaDynamic(MQTTFROM.from));
 						
 		GraphManager graphManager = new GraphManager();
 		

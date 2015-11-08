@@ -1,7 +1,7 @@
 package com.ociweb.mqttTestTools.publisher;
 
 import static com.ociweb.pronghorn.pipe.Pipe.byteBackingArray;
-import static com.ociweb.pronghorn.pipe.Pipe.byteMask;
+import static com.ociweb.pronghorn.pipe.Pipe.blobMask;
 import static com.ociweb.pronghorn.pipe.Pipe.bytePosition;
 import static com.ociweb.pronghorn.pipe.Pipe.takeRingByteLen;
 import static com.ociweb.pronghorn.pipe.Pipe.takeRingByteMetaData;
@@ -94,7 +94,7 @@ public class MessageCSVStage extends PronghornStage {
 		        int pos = bytePosition(meta, inputRing, len);//has side effect of moving the byte pointer!!
 		        										
 				byte[] data = byteBackingArray(meta, inputRing);
-				int mask = byteMask(inputRing);
+				int mask = blobMask(inputRing);
 					
 				if (data[mask&(pos+1)]!=',') {
 					throw new RuntimeException("The first char must be 0, 1, or 2 followed by a comma and no spaces, in the CSV");
